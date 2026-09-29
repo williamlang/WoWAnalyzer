@@ -18,13 +18,30 @@ interface GraphData {
   activeTimePercentage: number;
 }
 
+/** A stretch of the fight to shade on the graph, e.g. where some other metric dipped. */
+export interface ActiveTimeHighlight {
+  start: number;
+  end: number;
+  /** Shown in the tooltip, e.g. "CPM 42 vs 58 for the pull". */
+  label: string;
+  /** Any CSS color; shaded at low opacity behind the active time line. */
+  color: string;
+}
+
 interface Props {
   activeTimeSegments: { start: number; end: number }[];
   fightStart: number;
   fightEnd: number;
+  highlights?: ActiveTimeHighlight[];
 }
 
-const ActiveTimeGraph = ({ activeTimeSegments, fightStart, fightEnd, ...others }: Props) => {
+const ActiveTimeGraph = ({
+  activeTimeSegments,
+  fightStart,
+  fightEnd,
+  highlights = [],
+  ...others
+}: Props) => {
   // Generate active time rolling average from active time segments (memoize for perf)
   const graphData = useMemo(() => {
     const graphData: GraphData[] = [];
@@ -63,7 +80,7 @@ const ActiveTimeGraph = ({ activeTimeSegments, fightStart, fightEnd, ...others }
         {({ width, height }) => (
           <BaseChart
             spec={generateVegaSpec(fightStart)}
-            data={{ graphData }}
+            data={{ graphData, highlights }}
             width={width}
             height={height}
           />
@@ -144,6 +161,27 @@ function generateVegaSpec(fightStartTime: number): VisualizationSpec {
       },
     },
     layer: [
+      {
+        // Optional highlighted stretches, drawn first so they sit behind the line.
+        data: { name: 'highlights' },
+        transform: [
+          { calculate: `datum.start - ${fightStartTime}`, as: 'start_shifted' },
+          { calculate: `datum.end - ${fightStartTime}`, as: 'end_shifted' },
+          { calculate: formatTime('datum.start_shifted'), as: 'start_humanized' },
+          { calculate: formatTime('datum.end_shifted'), as: 'end_humanized' },
+        ],
+        mark: { type: 'rect', opacity: 0.25 },
+        encoding: {
+          x: { field: 'start_shifted', type: 'quantitative' as const },
+          x2: { field: 'end_shifted' },
+          color: { field: 'color', type: 'nominal' as const, scale: null },
+          tooltip: [
+            { field: 'label', type: 'nominal', title: 'Dip' },
+            { field: 'start_humanized', type: 'nominal', title: 'From' },
+            { field: 'end_humanized', type: 'nominal', title: 'To' },
+          ],
+        },
+      },
       {
         layer: [
           // First layer always applies

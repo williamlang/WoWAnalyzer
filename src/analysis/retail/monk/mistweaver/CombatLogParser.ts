@@ -103,6 +103,7 @@ import AmplifiedRush from './modules/spells/AmplifiedRush';
 import WayOfTheSerpent from './modules/spells/WayOfTheSerpent';
 import MovementTracker from './modules/features/MovementDuringBuffTracker';
 import CastingWhileMoving from './modules/features/CastingWhileMoving';
+import PerformanceDips from './modules/features/PerformanceDips';
 import WayOfTheCrane from './modules/spells/WayOfTheCrane';
 import AncientTeachingsLinkNormalizer from './normalizers/AncientTeachingsLinkNormalizer';
 import SoothingMistLinkNormalizer from './normalizers/SoothingMistLinkNormalizer';
@@ -162,6 +163,7 @@ class CombatLogParser extends CoreCombatLogParser {
     risingMistBreakdown: RisingMistBreakdown,
     movementTracker: MovementTracker,
     castingWhileMoving: CastingWhileMoving,
+    performanceDips: PerformanceDips,
 
     // Guide helpers
     sheilunsGiftCloudTracker: SheilunsGiftCloudTracker,

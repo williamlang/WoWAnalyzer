@@ -14,7 +14,7 @@ import { getCurrentRSKTalent } from '../../constants';
 /** Width of the rolling window the series are smoothed over, in ms. */
 export const DIP_WINDOW_MS = 15000;
 /** Time between samples of the rolling series, in ms. */
-const SAMPLE_PERIOD_MS = 1000;
+export const SAMPLE_PERIOD_MS = 1000;
 /** A window needs at least this much time alive in it to be judged. */
 const MIN_ALIVE_IN_WINDOW_MS = 5000;
 /** Stretches shown per metric. */
@@ -84,8 +84,7 @@ class PerformanceDips extends Analyzer {
   private kickCooldownStart: number | null = null;
   private readonly castTimestamps: number[] = [];
 
-  private computed: { samples: DipSample[]; dips: PerformanceDip[]; baseline: DipSample } | null =
-    null;
+  private computedDips: PerformanceDip[] | null = null;
 
   constructor(options: Options) {
     super(options);
@@ -107,12 +106,8 @@ class PerformanceDips extends Analyzer {
   }
 
   get dips(): PerformanceDip[] {
-    return this.compute().dips;
-  }
-
-  /** Each metric over the whole pull, excluding time spent dead. */
-  get baseline(): DipSample {
-    return this.compute().baseline;
+    this.computedDips ??= this.computeDips();
+    return this.computedDips;
   }
 
   private onUpdateSpellUsable(event: UpdateSpellUsableEvent) {
@@ -168,10 +163,7 @@ class PerformanceDips extends Analyzer {
     }));
   }
 
-  private compute() {
-    if (this.computed) {
-      return this.computed;
-    }
+  private computeDips(): PerformanceDip[] {
     const fightStart = this.owner.fight.start_time;
     const fightEnd = this.owner.fight.end_time;
     const dead = this.deadSegments;
@@ -205,16 +197,16 @@ class PerformanceDips extends Analyzer {
     );
     dips.sort((a, b) => b.drop - a.drop);
 
-    this.computed = { samples, dips, baseline };
-    return this.computed;
+    return dips;
   }
 }
 
 /**
  * Picks the lowest non-overlapping windows that sit at least MIN_DROP below the baseline,
  * then widens each while the rolling value stays low, and re-measures it over that span.
+ * Exported for tests.
  */
-function findDips(
+export function findDips(
   samples: DipSample[],
   metric: DipMetric,
   baseline: number | null,

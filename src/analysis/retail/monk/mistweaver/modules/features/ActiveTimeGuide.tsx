@@ -43,7 +43,7 @@ export default function ActiveTimeGuide() {
   };
   const describeDip = (dip: PerformanceDip) =>
     `${metricName[dip.metric]} ${formatDipValue(dip.metric, dip.value)} vs ${formatDipValue(dip.metric, dip.baseline)} for the pull`;
-  const { baseline, dips } = performanceDips;
+  const { dips } = performanceDips;
   const highlights: ActiveTimeHighlight[] = dips.map((dip) => ({
     start: dip.start,
     end: dip.end,
@@ -84,18 +84,6 @@ export default function ActiveTimeGuide() {
               <StatCardDivider color={activeTimeColor} />
               <StatCardLabel>Active Time</StatCardLabel>
             </StatCard>
-            {(['rem', 'kick', 'cpm'] as DipMetric[]).map((metric) => {
-              const value = baseline[metric];
-              return (
-                <StatCard key={metric} color={DIP_COLORS[metric]}>
-                  <StatCardValue color={DIP_COLORS[metric]}>
-                    {value === null ? '-' : formatDipValue(metric, value)}
-                  </StatCardValue>
-                  <StatCardDivider color={DIP_COLORS[metric]} />
-                  <StatCardLabel>{metricName[metric]}</StatCardLabel>
-                </StatCard>
-              );
-            })}
           </StatsRow>
         }
       >
